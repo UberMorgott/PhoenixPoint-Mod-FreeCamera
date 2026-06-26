@@ -1,0 +1,15 @@
+{
+  "ID": "Morgott.FreeCamera",
+  "AssemblyName": "FreeCamera.dll",
+  "Author": [
+    { "Key": "English", "Value": "Morgott" }
+  ],
+  "Version": "1.0.0",
+  "Name": [
+    { "Key": "English", "Value": "Free Camera" }
+  ],
+  "Description": [
+    { "Key": "English", "Value": "A Baldur's-Gate-style free-orbit tactical camera. Hold the middle mouse button and drag to freely look around the battlefield: drag left/right to rotate (yaw) and up/down to tilt (pitch). The mouse wheel still zooms toward the screen centre, now with an extended range. Tune mouse sensitivity, invert-Y, pitch limits, and zoom range in the in-game mod settings. Tactical missions only; the stock Q/E rotation is left untouched." }
+  ],
+  "Dependencies": []
+}

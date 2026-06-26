@@ -1,0 +1,28 @@
+# Build output
+bin/
+obj/
+
+# IDE / OS
+.serena/
+.vs/
+*.user
+*.suo
+Thumbs.db
+.DS_Store
+
+# Release packaging
+*.zip
+
+# Steam Workshop generated content folder (rebuilt by pack-dist.ps1)
+workshop/Dist/
+
+# SteamworksPy publisher native binaries — environment-local, never commit
+workshop/steamugc/steam_api64.dll
+workshop/steamugc/SteamworksPy*.dll
+workshop/steamugc/steam_appid.txt
+workshop/steamugc/*.so
+workshop/steamugc/*.dylib
+workshop/steamugc/steamworks/
+
+# Secrets / cookies
+.env
