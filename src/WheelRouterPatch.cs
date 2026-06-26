@@ -1,3 +1,4 @@
+using System.Reflection;
 using Base.Cameras;
 using Base.Input;
 using HarmonyLib;
@@ -44,9 +45,21 @@ namespace Morgott.FreeCamera
         private const string DiscreteZoomInAction = "Discrete Zoom In";
         private const string DiscreteZoomOutAction = "Discrete Zoom Out";
 
+        // The engine applies DiscreteZoomIn/OutIncrement TWICE per discrete-zoom event (once in
+        // HandleZoomRotateSelect at cs:603, once in the HandleInput Pressed branch at cs:533), so the
+        // per-apply increment we write is HALF the intended net per-notch step.
+        private const bool DoubleApplied = true;
+
+        // Reflection handles for reading the live zoom distance (PlanarScrollCamera._distanceToTarget is a
+        // private DampedFloat struct; its public Target field is the engine's stepping value). Resolved
+        // once; the types never change at runtime.
+        private static FieldInfo _distanceToTargetField; // PlanarScrollCamera._distanceToTarget (DampedFloat)
+        private static FieldInfo _dampedTargetField;     // DampedFloat.Target (float)
+
         // The original parameter is named "ie"; Harmony injects it by name. Taken by ref so the in-place
-        // zoom rewrite / floor-direction flip is seen by the original method.
-        private static bool Prefix(ref InputEvent ie)
+        // zoom rewrite / floor-direction flip is seen by the original method. __instance is the live
+        // camera (its current distance drives the proportional zoom step).
+        private static bool Prefix(PlanarScrollCamera __instance, ref InputEvent ie)
         {
             FreeCameraConfig cfg = FreeCameraMain.Instance?.Config;
             if (cfg == null || !cfg.EnableOrbit)
@@ -54,8 +67,18 @@ namespace Morgott.FreeCamera
                 return true; // mod off -> stock wheel (native floor-slice)
             }
 
-            // The mouse wheel reaches the tactical camera only as the "Change Level" axis event; every
-            // other input event (keyboard t/g/z/c, Q/E, Select, gamepad, ...) passes straight through.
+            // Case B: a native keyboard t/g discrete-zoom press. The wheel routes through Case A below;
+            // t/g arrive directly as these events. Make t/g distance-proportional too (shared feel) by
+            // setting the per-notch increment from the current distance before the original applies it.
+            if (ie.Type == InputEventType.Pressed
+                && (ie.Name == DiscreteZoomInAction || ie.Name == DiscreteZoomOutAction))
+            {
+                ApplyProportionalZoomStep(__instance, cfg);
+                return true;
+            }
+
+            // Case A: the mouse wheel reaches the tactical camera only as the "Change Level" axis event;
+            // every other input event (Q/E, Select, gamepad, ...) passes straight through.
             if (ie.Type != InputEventType.AxisUpdate || ie.Name != WheelFloorAxisAction || ie.AxisValue == 0f)
             {
                 return true;
@@ -68,6 +91,9 @@ namespace Morgott.FreeCamera
 
             if (res.Action == WheelAction.Zoom)
             {
+                // Set the distance-proportional per-notch increment BEFORE the rewrite, so the original's
+                // double-apply (cs:603 + cs:533) sums to the intended proportional step for THIS notch.
+                ApplyProportionalZoomStep(__instance, cfg);
                 // Rewrite the notch into a native discrete-zoom press: the original method then zooms via
                 // _distanceToTarget (MaxZoomInLimit/Out clamp) and, being no longer an AxisUpdate, never
                 // takes the floor branch -> bare wheel zooms only.
@@ -84,6 +110,60 @@ namespace Morgott.FreeCamera
                 ie.AxisValue = -ie.AxisValue;
             }
             return true;
+        }
+
+        /// <summary>
+        /// Write the distance-proportional per-notch increment onto the camera's
+        /// <c>DiscreteZoomIn/OutIncrement</c> for the discrete-zoom event about to run. Net travel is
+        /// <c>distance × ZoomFactor</c> clamped to [MinZoomStep, MaxZoomStep]; the value written is half
+        /// that (the engine applies it twice). Both increments are set to the same value so zoom-in and
+        /// zoom-out share the step (the engine's zoom-out path also reads <c>DiscreteZoomInIncrement</c>).
+        /// </summary>
+        private static void ApplyProportionalZoomStep(PlanarScrollCamera cam, FreeCameraConfig cfg)
+        {
+            float distance = ReadCurrentDistance(cam);
+            float perApply = OrbitInputMath.ComputeProportionalZoomStep(
+                distance, cfg.ZoomFactor, cfg.MinZoomStep, cfg.MaxZoomStep, DoubleApplied);
+            cam.DiscreteZoomInIncrement = perApply;
+            cam.DiscreteZoomOutIncrement = perApply;
+        }
+
+        /// <summary>
+        /// Read the camera's live zoom distance (<c>_distanceToTarget.Target</c> — the engine's own
+        /// stepping value, matching the clamp checks at cs:531/601). Reflection is cached. Fail-open: any
+        /// failure falls back to the public <c>DistanceToTarget</c> getter (the damped current distance),
+        /// so the proportional feel still holds.
+        /// </summary>
+        private static float ReadCurrentDistance(PlanarScrollCamera cam)
+        {
+            try
+            {
+                if (_distanceToTargetField == null)
+                {
+                    _distanceToTargetField = typeof(PlanarScrollCamera)
+                        .GetField("_distanceToTarget", BindingFlags.NonPublic | BindingFlags.Instance);
+                }
+                if (_distanceToTargetField != null)
+                {
+                    object boxed = _distanceToTargetField.GetValue(cam); // boxed DampedFloat struct
+                    if (boxed != null)
+                    {
+                        if (_dampedTargetField == null)
+                        {
+                            _dampedTargetField = boxed.GetType().GetField("Target"); // public float field
+                        }
+                        if (_dampedTargetField != null)
+                        {
+                            return (float)_dampedTargetField.GetValue(boxed);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // fall through to the public getter
+            }
+            return cam.DistanceToTarget;
         }
 
         /// <summary>True while the configured floor-swap modifier key is held (either left/right variant).</summary>
@@ -106,8 +186,10 @@ namespace Morgott.FreeCamera
     /// Re-applies the configured zoom-distance limits every time the tactical camera activates. The
     /// camera instance is re-created per mission, so a one-time field override would be lost; pushing
     /// <c>MaxZoomInLimit</c>/<c>MaxZoomOutLimit</c> from a postfix on
-    /// <c>PlanarScrollCamera.OnActivate(bool)</c> survives that re-creation. (The live controller also
-    /// pushes them on config change; this covers fresh missions.)
+    /// <c>PlanarScrollCamera.OnActivate(bool)</c> survives that re-creation. The per-notch
+    /// <c>DiscreteZoomIn/OutIncrement</c> is NOT set here — it is distance-proportional and recomputed on
+    /// every notch / t-g press in <see cref="WheelRouterPatch"/>. (The live controller also pushes the
+    /// range on config change; this covers fresh missions.)
     /// </summary>
     [HarmonyPatch(typeof(PlanarScrollCamera), "OnActivate")]
     internal static class ZoomLimitReapplyPatch
@@ -128,6 +210,43 @@ namespace Morgott.FreeCamera
             OrbitInputMath.SanitizeZoomLimits(ref min, ref max);
             __instance.MaxZoomInLimit = min;   // closest distance
             __instance.MaxZoomOutLimit = max;  // farthest distance
+        }
+    }
+
+    /// <summary>
+    /// Keeps the user's configured close zoom (<c>ZoomMin</c>) reachable across new turns.
+    ///
+    /// RCA (decompile, 2026-06-26): min zoom is NOT tied to floor height. <c>_floorHeight</c> only ever
+    /// moves the look-at target / camera bounds (PlanarScrollCamera.cs:517/553/566/924/928 and :368-370),
+    /// never <c>_distanceToTarget</c> — so raising the floor does not move the near-zoom bound. What
+    /// actually "resets" the close zoom is the tactical UI: every new turn,
+    /// <c>TacticalView.OnNewTurn</c> calls
+    /// <c>PlanarScrollCamera.ClampCameraDistance(InitialDistanceToTarget, +Inf)</c>
+    /// (TacticalView.cs:1164), forcing the minimum distance up to the prefab's InitialDistanceToTarget
+    /// (17), which overrides our <c>MaxZoomInLimit = ZoomMin</c> and yanks the camera back out.
+    ///
+    /// Fix: a prefix that lowers that forced minimum to the user's ZoomMin (never raising it), so the
+    /// native <c>Clamp</c> keeps whatever close distance the camera already had (≥ ZoomMin) instead of
+    /// snapping out to 17. Zoom-out and floor behaviour are untouched. Active only while orbit is on.
+    /// </summary>
+    [HarmonyPatch(typeof(PlanarScrollCamera), "ClampCameraDistance", new[] { typeof(float), typeof(float) })]
+    internal static class DistanceClampMinPatch
+    {
+        private static void Prefix(ref float minDistance)
+        {
+            FreeCameraConfig cfg = FreeCameraMain.Instance?.Config;
+            if (cfg == null || !cfg.EnableOrbit)
+            {
+                return;
+            }
+            float min = cfg.ZoomMin;
+            float max = cfg.ZoomMax;
+            OrbitInputMath.SanitizeZoomLimits(ref min, ref max);
+            // Only ever lower the enforced floor toward ZoomMin; never raise a caller's tighter bound.
+            if (minDistance > min)
+            {
+                minDistance = min;
+            }
         }
     }
 }

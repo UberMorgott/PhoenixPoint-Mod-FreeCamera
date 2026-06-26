@@ -101,6 +101,7 @@ namespace Morgott.FreeCamera
             cfg.SensitivityY = OrbitInputMath.SanitizeSensitivity(cfg.SensitivityY);
             OrbitInputMath.SanitizePitchLimits(ref cfg.PitchMin, ref cfg.PitchMax);
             OrbitInputMath.SanitizeZoomLimits(ref cfg.ZoomMin, ref cfg.ZoomMax);
+            OrbitInputMath.SanitizeProportionalZoom(ref cfg.ZoomFactor, ref cfg.MinZoomStep, ref cfg.MaxZoomStep);
         }
     }
 }

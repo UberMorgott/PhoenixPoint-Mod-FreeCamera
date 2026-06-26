@@ -92,5 +92,23 @@ namespace Morgott.FreeCamera
         [ConfigField("Max zoom distance",
             "Farthest the camera may zoom out. Higher = wider battlefield view. Must be above the min.")]
         public float ZoomMax = 55f;
+
+        /// <summary>Fraction of the CURRENT zoom distance moved per wheel notch — distance-proportional
+        /// (multiplicative) zoom: bigger steps when far, gentler when close. Clamped to &gt; 0 in code.</summary>
+        [ConfigField("Wheel zoom factor",
+            "Distance-proportional zoom: each scroll-wheel notch (and keyboard t/g) moves this fraction of the current distance, so the camera zooms fast when far and gently when near. ~0.12 = smooth. Higher = bigger jumps. Must be greater than 0.")]
+        public float ZoomFactor = 0.12f;
+
+        /// <summary>Floor on the per-notch step so the proportional zoom never crawls near the closest
+        /// distance. Clamped to 0 &lt; MinZoomStep &lt; MaxZoomStep in code.</summary>
+        [ConfigField("Min zoom step",
+            "Smallest distance one scroll notch may move, so the zoom never crawls when very close in. Must be greater than 0 and below the max step.")]
+        public float MinZoomStep = 0.3f;
+
+        /// <summary>Cap on the per-notch step so a very large far distance cannot teleport the camera the
+        /// whole range in one notch. Clamped above MinZoomStep in code.</summary>
+        [ConfigField("Max zoom step",
+            "Largest distance one scroll notch may move, so a far view does not jump the whole range in a single notch. Must be above the min step.")]
+        public float MaxZoomStep = 8f;
     }
 }

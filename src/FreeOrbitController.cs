@@ -46,7 +46,9 @@ namespace Morgott.FreeCamera
             _dragging = false;
         }
 
-        /// <summary>Push the configured zoom range onto the bound camera's public zoom-limit fields.</summary>
+        /// <summary>Push the configured zoom range (close/far clamps) onto the bound camera's public
+        /// fields. The per-notch discrete-zoom increment is NOT set here: it is now distance-proportional
+        /// and recomputed on every wheel notch / keyboard t-g press in <see cref="WheelRouterPatch"/>.</summary>
         public void ApplyZoomLimits()
         {
             FreeCameraConfig cfg = FreeCameraMain.Instance?.Config;

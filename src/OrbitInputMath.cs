@@ -11,6 +11,23 @@ namespace Morgott.FreeCamera
         /// <summary>Sensitivity used when the configured value is invalid (&lt;= 0 / NaN / Inf).</summary>
         public const float DefaultSensitivity = 1f;
 
+        /// <summary>
+        /// Default fraction of the CURRENT zoom distance moved per wheel notch (and per keyboard t/g
+        /// press). Distance-proportional zoom: far from the target a notch covers more ground, close in
+        /// it steps gently — the multiplicative feel of a 3D editor. Net travel per notch is
+        /// <c>distance × ZoomFactor</c>, clamped to [<see cref="DefaultMinZoomStep"/>,
+        /// <see cref="DefaultMaxZoomStep"/>]. Used when the configured value is invalid.
+        /// </summary>
+        public const float DefaultZoomFactor = 0.12f;
+
+        /// <summary>Default floor on the net per-notch step so the zoom never crawls to a halt near the
+        /// closest distance (where <c>distance × ZoomFactor</c> shrinks toward zero).</summary>
+        public const float DefaultMinZoomStep = 0.3f;
+
+        /// <summary>Default cap on the net per-notch step so a very large far distance cannot teleport
+        /// the camera the whole range in a single notch.</summary>
+        public const float DefaultMaxZoomStep = 8f;
+
         /// <summary>Base angular gain: degrees of rotation per pixel of mouse movement at sensitivity 1.</summary>
         public const float BaseDegreesPerPixel = 0.2f;
 
@@ -62,6 +79,48 @@ namespace Morgott.FreeCamera
                 return DefaultSensitivity;
             }
             return value;
+        }
+
+        /// <summary>
+        /// Force the proportional-zoom tuning into a sane band: every value strictly positive and finite
+        /// (invalid ⇒ its default), and <paramref name="minStep"/> &lt; <paramref name="maxStep"/>
+        /// (swapped if reversed, made distinct if equal). Applied at config load and defensively inside
+        /// <see cref="ComputeProportionalZoomStep"/>.
+        /// </summary>
+        public static void SanitizeProportionalZoom(ref float factor, ref float minStep, ref float maxStep)
+        {
+            if (float.IsNaN(factor) || float.IsInfinity(factor) || factor <= 0f) factor = DefaultZoomFactor;
+            if (float.IsNaN(minStep) || float.IsInfinity(minStep) || minStep <= 0f) minStep = DefaultMinZoomStep;
+            if (float.IsNaN(maxStep) || float.IsInfinity(maxStep) || maxStep <= 0f) maxStep = DefaultMaxZoomStep;
+            if (minStep > maxStep)
+            {
+                float tmp = minStep; minStep = maxStep; maxStep = tmp;
+            }
+            if (minStep >= maxStep)
+            {
+                maxStep = minStep + 1f;
+            }
+        }
+
+        /// <summary>
+        /// Distance-proportional per-notch zoom step. The intended NET travel for one wheel notch is
+        /// <c>distance × factor</c>, clamped to [<paramref name="minStep"/>, <paramref name="maxStep"/>]
+        /// — so the camera moves fast when far from the target and gently when near. Tuning inputs are
+        /// sanitized internally (see <see cref="SanitizeProportionalZoom"/>); a NaN/Inf/negative distance
+        /// is treated as 0 (⇒ the min-step floor). When <paramref name="doubleApplied"/> is true the
+        /// engine applies the camera's increment twice per discrete-zoom event
+        /// (PlanarScrollCamera.HandleZoomRotateSelect at cs:603 AND the HandleInput Pressed branch at
+        /// cs:533), so the value returned — what is written to <c>DiscreteZoomIn/OutIncrement</c> — is
+        /// HALF the net step, making the two applies sum to the intended proportional amount.
+        /// </summary>
+        public static float ComputeProportionalZoomStep(float distance, float factor, float minStep, float maxStep, bool doubleApplied)
+        {
+            SanitizeProportionalZoom(ref factor, ref minStep, ref maxStep);
+            float d = (float.IsNaN(distance) || float.IsInfinity(distance) || distance < 0f) ? 0f : distance;
+            float net = d * factor;
+            if (net < minStep) net = minStep;
+            if (net > maxStep) net = maxStep;
+            return doubleApplied ? net * 0.5f : net;
         }
 
         /// <summary>

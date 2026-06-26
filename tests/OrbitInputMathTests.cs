@@ -104,6 +104,130 @@ namespace Morgott.FreeCamera.Tests
             Assert.Equal(2.5f, OrbitInputMath.SanitizeSensitivity(2.5f), 4);
         }
 
+        // ---- ComputeProportionalZoomStep --------------------------------------------------
+
+        [Fact]
+        public void ProportionalZoom_ScalesWithDistance()
+        {
+            // In the un-clamped mid band, doubling the distance doubles the net step.
+            float near = OrbitInputMath.ComputeProportionalZoomStep(20f, 0.12f, 0.3f, 8f, doubleApplied: false);
+            float far = OrbitInputMath.ComputeProportionalZoomStep(40f, 0.12f, 0.3f, 8f, doubleApplied: false);
+            Assert.Equal(20f * 0.12f, near, 4);
+            Assert.Equal(40f * 0.12f, far, 4);
+            Assert.Equal(near * 2f, far, 4);
+        }
+
+        [Fact]
+        public void ProportionalZoom_NearZero_ClampedToMinStep()
+        {
+            // distance * factor would be ~0; the floor keeps the zoom from crawling.
+            float step = OrbitInputMath.ComputeProportionalZoomStep(0.5f, 0.12f, 0.3f, 8f, doubleApplied: false);
+            Assert.Equal(0.3f, step, 4);
+        }
+
+        [Fact]
+        public void ProportionalZoom_VeryFar_CappedToMaxStep()
+        {
+            // distance * factor = 1000 * 0.12 = 120; the cap prevents a teleport.
+            float step = OrbitInputMath.ComputeProportionalZoomStep(1000f, 0.12f, 0.3f, 8f, doubleApplied: false);
+            Assert.Equal(8f, step, 4);
+        }
+
+        [Fact]
+        public void ProportionalZoom_DoubleApplied_HalvesPerApply()
+        {
+            // The engine applies the increment twice, so the per-apply value is half the net step.
+            float net = OrbitInputMath.ComputeProportionalZoomStep(20f, 0.12f, 0.3f, 8f, doubleApplied: false);
+            float perApply = OrbitInputMath.ComputeProportionalZoomStep(20f, 0.12f, 0.3f, 8f, doubleApplied: true);
+            Assert.Equal(net * 0.5f, perApply, 4);
+            Assert.Equal(20f * 0.12f * 0.5f, perApply, 4);
+        }
+
+        [Theory]
+        [InlineData(float.NaN)]
+        [InlineData(float.PositiveInfinity)]
+        [InlineData(-50f)]
+        public void ProportionalZoom_InvalidDistance_TreatedAsZero_FloorsToMinStep(float badDistance)
+        {
+            float step = OrbitInputMath.ComputeProportionalZoomStep(badDistance, 0.12f, 0.3f, 8f, doubleApplied: false);
+            Assert.Equal(0.3f, step, 4);
+        }
+
+        [Fact]
+        public void ProportionalZoom_InvalidTuning_UsesDefaults()
+        {
+            // factor<=0, minStep<=0, maxStep<=0 are all replaced by their defaults inside the computation.
+            float step = OrbitInputMath.ComputeProportionalZoomStep(20f, -1f, 0f, float.NaN, doubleApplied: false);
+            Assert.Equal(20f * OrbitInputMath.DefaultZoomFactor, step, 4);
+        }
+
+        // ---- SanitizeProportionalZoom -----------------------------------------------------
+
+        [Theory]
+        [InlineData(0f)]
+        [InlineData(-1f)]
+        [InlineData(float.NaN)]
+        [InlineData(float.PositiveInfinity)]
+        public void SanitizeProportionalZoom_InvalidFactor_ResetsToDefault(float badFactor)
+        {
+            float factor = badFactor, minStep = 0.3f, maxStep = 8f;
+            OrbitInputMath.SanitizeProportionalZoom(ref factor, ref minStep, ref maxStep);
+            Assert.Equal(OrbitInputMath.DefaultZoomFactor, factor, 4);
+        }
+
+        [Theory]
+        [InlineData(0f)]
+        [InlineData(-2f)]
+        [InlineData(float.NaN)]
+        public void SanitizeProportionalZoom_InvalidSteps_ResetToDefaults(float bad)
+        {
+            float factor = 0.12f, minStep = bad, maxStep = bad;
+            OrbitInputMath.SanitizeProportionalZoom(ref factor, ref minStep, ref maxStep);
+            Assert.Equal(OrbitInputMath.DefaultMinZoomStep, minStep, 4);
+            Assert.Equal(OrbitInputMath.DefaultMaxZoomStep, maxStep, 4);
+        }
+
+        [Fact]
+        public void SanitizeProportionalZoom_SwappedSteps_Ordered()
+        {
+            float factor = 0.12f, minStep = 9f, maxStep = 2f;
+            OrbitInputMath.SanitizeProportionalZoom(ref factor, ref minStep, ref maxStep);
+            Assert.Equal(2f, minStep, 4);
+            Assert.Equal(9f, maxStep, 4);
+        }
+
+        [Fact]
+        public void SanitizeProportionalZoom_EqualSteps_MadeDistinct()
+        {
+            float factor = 0.12f, minStep = 4f, maxStep = 4f;
+            OrbitInputMath.SanitizeProportionalZoom(ref factor, ref minStep, ref maxStep);
+            Assert.True(minStep < maxStep);
+        }
+
+        [Fact]
+        public void SanitizeProportionalZoom_ValidDefaults_Unchanged()
+        {
+            float factor = OrbitInputMath.DefaultZoomFactor,
+                  minStep = OrbitInputMath.DefaultMinZoomStep,
+                  maxStep = OrbitInputMath.DefaultMaxZoomStep;
+            OrbitInputMath.SanitizeProportionalZoom(ref factor, ref minStep, ref maxStep);
+            Assert.Equal(OrbitInputMath.DefaultZoomFactor, factor, 4);
+            Assert.Equal(OrbitInputMath.DefaultMinZoomStep, minStep, 4);
+            Assert.Equal(OrbitInputMath.DefaultMaxZoomStep, maxStep, 4);
+        }
+
+        [Fact]
+        public void ProportionalZoom_DefaultIsSmoother_ThanStockPrefabStep()
+        {
+            // Stock prefab ships DiscreteZoomInIncrement = 3 (sharp). At the prefab's initial distance
+            // (17) our default per-apply step must stay well below it for a gentler feel.
+            float perApply = OrbitInputMath.ComputeProportionalZoomStep(
+                17f, OrbitInputMath.DefaultZoomFactor, OrbitInputMath.DefaultMinZoomStep,
+                OrbitInputMath.DefaultMaxZoomStep, doubleApplied: true);
+            Assert.True(perApply > 0f);
+            Assert.True(perApply < 3f);
+        }
+
         // ---- SanitizePitchLimits ----------------------------------------------------------
 
         [Fact]
