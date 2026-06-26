@@ -1,0 +1,24 @@
+[h1]Caméra libre[/h1]
+La caméra tactique de Phoenix Point est verrouillée sur une vue de dessus fixe. Caméra libre la transforme en une véritable caméra à orbite libre, comme un RPG isométrique vous laisse regarder autour de vous. Maintenez le bouton central de la souris et déplacez la vue comme bon vous semble.
+
+Ce mod ne change que la façon dont la caméra bouge. Il ne touche ni aux unités, ni à l'équilibrage, ni aux missions, ni à aucun contenu du jeu, vous pouvez donc l'ajouter ou le retirer à tout moment sans risque, et il fonctionne avec TFTV.
+
+[h2]Ce qu'il fait[/h2]
+[list]
+[*][b]Orbite libre sur le bouton central de la souris.[/b] Maintenez le BCS et faites glisser pour pivoter à gauche et à droite et incliner vers le haut et vers le bas. Observez le champ de bataille sous n'importe quel angle au lieu de la vue par défaut verrouillée.
+[*][b]Un zoom plus proche et plus fluide.[/b] La molette zoome vers le centre de l'écran de façon naturelle, rapide quand vous êtes loin et doux quand vous êtes près, et elle approche bien plus que ne le permettait la caméra d'origine.
+[*][b]Changement d'étage avec Alt plus molette.[/b] Traversez les étages d'un bâtiment sans renoncer au zoom à la molette. La touche de modification et les directions sont configurables.
+[*][b]La rotation au clavier fonctionne toujours.[/b] Q et E continuent de faire pivoter la caméra exactement comme avant.
+[/list]
+
+[h2]Ce qu'il corrige[/h2]
+Par défaut, le bouton central de la souris ne faisait que ramener brusquement la caméra sur un dézoom lointain, ce qui était presque inutile en combat. Caméra libre remplace cela par un contrôle manuel complet, pour que vous puissiez vraiment évaluer les couverts, la ligne de vue et l'élévation avant de valider un déplacement.
+
+[h2]Paramètres[/h2]
+Tout est réglable depuis le menu des mods en jeu : activer ou désactiver l'orbite, inverser l'axe vertical, la sensibilité, les limites d'inclinaison, la plage de zoom et la touche de modification des étages. Le mod est entièrement traduit, donc le menu et cette page s'affichent dans votre langue.
+
+[h2]Portée[/h2]
+Missions tactiques uniquement pour l'instant. La caméra de la carte du monde n'est pas modifiée.
+
+[h2]Compatibilité[/h2]
+Fonctionne sur le jeu de base et est entièrement compatible avec TFTV. Aucun nouveau contenu, aucune modification des sauvegardes, et il se retire facilement.

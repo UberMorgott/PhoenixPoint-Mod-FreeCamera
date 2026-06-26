@@ -1,0 +1,24 @@
+[h1]Freie Kamera[/h1]
+Die taktische Kamera von Phoenix Point ist auf eine feste Draufsicht beschränkt. Freie Kamera macht daraus eine echte frei schwenkbare Kamera, so wie ein isometrisches Rollenspiel dich umsehen lässt. Halte die mittlere Maustaste gedrückt und bewege die Ansicht ganz nach Belieben.
+
+Dieser Mod ändert nur, wie sich die Kamera bewegt. Er rührt weder Einheiten noch Balance, Missionen oder sonstige Spielinhalte an, daher kannst du ihn jederzeit gefahrlos hinzufügen oder entfernen, und er funktioniert zusammen mit TFTV.
+
+[h2]Was er macht[/h2]
+[list]
+[*][b]Freier Schwenk auf der mittleren Maustaste.[/b] Halte die MMT gedrückt und ziehe, um nach links und rechts zu drehen und nach oben und unten zu neigen. Betrachte das Schlachtfeld aus jedem Winkel statt aus der festen Standardansicht.
+[*][b]Näherer, sanfterer Zoom.[/b] Das Mausrad zoomt natürlich zur Bildschirmmitte hin, schnell wenn du weit weg bist und sanft wenn du nah dran bist, und es kommt viel näher heran als die Standardkamera es erlaubte.
+[*][b]Etagenwechsel mit Alt plus Rad.[/b] Schneide dich durch die Etagen eines Gebäudes, ohne auf den Radzoom zu verzichten. Die Modifikatortaste und die Richtungen sind einstellbar.
+[*][b]Tastaturdrehung funktioniert weiterhin.[/b] Q und E drehen die Kamera genau wie zuvor.
+[/list]
+
+[h2]Was er behebt[/h2]
+Standardmäßig rastete die mittlere Maustaste die Kamera nur in eine weit herausgezoomte Ansicht, was im Kampf fast nutzlos war. Freie Kamera ersetzt das durch volle manuelle Kontrolle, sodass du Deckung, Sichtlinie und Höhe wirklich einschätzen kannst, bevor du einen Zug festlegst.
+
+[h2]Einstellungen[/h2]
+Alles lässt sich im Mod-Menü im Spiel anpassen: den Schwenk ein- oder ausschalten, die vertikale Achse umkehren, Empfindlichkeit, Neigungsgrenzen, Zoombereich und die Etagen-Modifikatortaste. Der Mod ist vollständig übersetzt, daher erscheinen das Menü und diese Seite in deiner eigenen Sprache.
+
+[h2]Umfang[/h2]
+Vorerst nur taktische Einsätze. Die Kamera der Weltkarte bleibt unberührt.
+
+[h2]Kompatibilität[/h2]
+Läuft im Grundspiel und ist voll kompatibel mit TFTV. Keine neuen Inhalte, keine Änderungen an Spielständen, und er lässt sich leicht entfernen.

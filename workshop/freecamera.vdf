@@ -1,0 +1,30 @@
+// SteamCMD Workshop build item descriptor for Free Camera (Phoenix Point).
+//
+// Usage:
+//   steamcmd +login <user> +workshop_build_item "<abs path to this .vdf>" +quit
+//
+//   publishedfileid "0"            -> CREATE a brand-new Workshop item.
+//   publishedfileid "<real id>"    -> UPDATE the existing item with that id.
+//
+// NOTE: Free Camera is not yet published. The first publish is done with the
+//       headless SteamworksPy publisher (workshop\steamugc\publish_ugc.py
+//       --create); it creates the item, assigns the publishedfileid, writes
+//       workshop\steamugc\published_id.txt, and stamps the id below. After that,
+//       SteamCMD / future --update runs target that id. Be logged in as the OWNER.
+//
+//   contentfolder  = absolute path to the assembled /Dist (FreeCamera.dll +
+//                    meta.json + Assets\ if present). Run workshop\pack-dist.ps1 first.
+//   previewfile    = absolute path to the preview image (<= 1 MB).
+//   changenote     = shown in the item's change history.
+//
+// Paths below assume the repo lives at E:\DEV\PhoenixPoint\FreeCamera.
+// Adjust if your checkout is elsewhere.
+
+"workshopitem"
+{
+	"appid"           "839770"
+	"publishedfileid" "0"
+	"contentfolder"   "E:\DEV\PhoenixPoint\FreeCamera\workshop\Dist"
+	"previewfile"     "E:\DEV\PhoenixPoint\FreeCamera\image\steam_preview.jpg"
+	"changenote"      "Update Free Camera."
+}

@@ -1,0 +1,24 @@
+[h1]Cámara libre[/h1]
+La cámara táctica de Phoenix Point está bloqueada en una vista cenital fija. Cámara libre la convierte en una auténtica cámara de órbita libre, como un RPG isométrico te deja mirar a tu alrededor. Mantén pulsado el botón central del ratón y mueve la vista como quieras.
+
+Este mod solo cambia cómo se mueve la cámara. No toca las unidades, el equilibrio, las misiones ni ningún contenido del juego, así que es seguro añadirlo o quitarlo en cualquier momento, y funciona junto con TFTV.
+
+[h2]Qué hace[/h2]
+[list]
+[*][b]Órbita libre con el botón central del ratón.[/b] Mantén pulsado el BCR y arrastra para girar a izquierda y derecha e inclinar arriba y abajo. Mira el campo de batalla desde cualquier ángulo en lugar de la vista fija predeterminada.
+[*][b]Un zoom más cercano y suave.[/b] La rueda del ratón acerca hacia el centro de la pantalla de forma natural, rápido cuando estás lejos y suave cuando estás cerca, y llega mucho más cerca de lo que permitía la cámara original.
+[*][b]Cambio de planta con Alt más rueda.[/b] Atraviesa las plantas de un edificio sin renunciar al zoom con la rueda. La tecla modificadora y las direcciones son configurables.
+[*][b]La rotación con el teclado sigue funcionando.[/b] Q y E siguen girando la cámara exactamente igual que antes.
+[/list]
+
+[h2]Qué corrige[/h2]
+Por defecto, el botón central del ratón solo alejaba la cámara de golpe a una vista lejana, lo que resultaba casi inútil en combate. Cámara libre lo sustituye por un control manual completo, para que puedas evaluar de verdad las coberturas, la línea de visión y la elevación antes de confirmar un movimiento.
+
+[h2]Ajustes[/h2]
+Todo se puede ajustar desde el menú de mods del juego: activar o desactivar la órbita, invertir el eje vertical, la sensibilidad, los límites de inclinación, el rango de zoom y la tecla modificadora de plantas. El mod está totalmente traducido, así que el menú y esta página aparecen en tu idioma.
+
+[h2]Alcance[/h2]
+Por ahora solo misiones tácticas. La cámara del mapa del mundo no se toca.
+
+[h2]Compatibilidad[/h2]
+Funciona en el juego base y es totalmente compatible con TFTV. Sin contenido nuevo, sin cambios en las partidas guardadas, y es fácil de quitar.

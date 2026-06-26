@@ -1,0 +1,24 @@
+[h1]Swobodna kamera[/h1]
+Taktyczna kamera w Phoenix Point jest zablokowana w stałym widoku z góry. Swobodna kamera zamienia ją w prawdziwą kamerę o swobodnej orbicie, tak jak w izometrycznych grach RPG, gdzie możesz się rozejrzeć. Przytrzymaj środkowy przycisk myszy i poruszaj widokiem tak, jak tylko chcesz.
+
+Ten mod zmienia wyłącznie sposób poruszania się kamery. Nie rusza jednostek, balansu, misji ani żadnej zawartości gry, więc możesz go bezpiecznie dodać lub usunąć w dowolnej chwili, a działa razem z TFTV.
+
+[h2]Co robi[/h2]
+[list]
+[*][b]Swobodna orbita na środkowym przycisku myszy.[/b] Przytrzymaj ŚPM i przeciągnij, aby obracać w lewo i w prawo oraz pochylać w górę i w dół. Patrz na pole bitwy pod dowolnym kątem zamiast z zablokowanego widoku domyślnego.
+[*][b]Bliższy i płynniejszy zoom.[/b] Kółko myszy przybliża ku środkowi ekranu w naturalny sposób, szybko gdy jesteś daleko i delikatnie gdy jesteś blisko, a sięga znacznie bliżej niż pozwalała oryginalna kamera.
+[*][b]Zmiana pięter na Alt plus kółko.[/b] Przecinaj piętra budynku bez rezygnowania z przybliżania kółkiem. Klawisz modyfikatora i kierunki można skonfigurować.
+[*][b]Obracanie z klawiatury nadal działa.[/b] Q i E obracają kamerę dokładnie tak jak wcześniej.
+[/list]
+
+[h2]Co naprawia[/h2]
+Domyślnie środkowy przycisk myszy jedynie gwałtownie oddalał kamerę do dalekiego widoku, co było niemal bezużyteczne w walce. Swobodna kamera zastępuje to pełną kontrolą ręczną, dzięki czemu naprawdę odczytasz osłony, linię wzroku i wysokość, zanim zatwierdzisz ruch.
+
+[h2]Ustawienia[/h2]
+Wszystko można dostosować w menu modów w grze: włączanie i wyłączanie orbity, odwracanie osi pionowej, czułość, limity pochylenia, zakres przybliżenia oraz klawisz modyfikatora pięter. Mod jest w pełni przetłumaczony, więc menu i ta strona wyświetlają się w twoim języku.
+
+[h2]Zakres[/h2]
+Na razie tylko misje taktyczne. Kamera na mapie świata pozostaje nietknięta.
+
+[h2]Zgodność[/h2]
+Działa na podstawowej wersji gry i jest w pełni zgodny z TFTV. Bez nowej zawartości, bez zmian w zapisach gry, i łatwo go usunąć.

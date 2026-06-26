@@ -1,0 +1,24 @@
+[h1]Free Camera[/h1]
+Phoenix Point's tactical camera is locked to a fixed top down view. Free Camera turns it into a real free orbit camera, the way an isometric RPG lets you look around. Hold the middle mouse button and move the view however you want.
+
+This mod only changes how the camera moves. It does not touch units, balance, missions or any game content, so it is safe to add or remove at any time, and it works together with TFTV.
+
+[h2]What it does[/h2]
+[list]
+[*][b]Free orbit on the middle mouse button.[/b] Hold MMB and drag to rotate left and right and tilt up and down. Look at the battlefield from any angle instead of the locked default view.
+[*][b]Closer, smoother zoom.[/b] The mouse wheel zooms toward the center of the screen with a natural feel, fast when you are far out and gentle when you are close, and it reaches much closer than the vanilla camera allowed.
+[*][b]Floor switching on Alt plus wheel.[/b] Slice through building floors without giving up wheel zoom. The modifier key and the directions are configurable.
+[*][b]Keyboard rotation still works.[/b] Q and E keep rotating the camera exactly like before.
+[/list]
+
+[h2]What it fixes[/h2]
+By default the middle mouse button only snapped the camera to a far zoom out, which was almost useless in combat. Free Camera replaces that with full manual control, so you can actually read cover, line of sight and elevation before you commit a move.
+
+[h2]Settings[/h2]
+Everything is adjustable from the in game Mods menu: turn the orbit on or off, invert the vertical axis, sensitivity, pitch limits, zoom range, and the floor modifier key. The mod is fully translated, so the menu and this page show up in your own language.
+
+[h2]Scope[/h2]
+Tactical missions only for now. The geoscape camera is left untouched.
+
+[h2]Compatibility[/h2]
+Runs on the base game and is fully compatible with TFTV. No new content, no save changes, and it is easy to remove.

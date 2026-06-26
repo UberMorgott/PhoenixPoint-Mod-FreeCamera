@@ -1,0 +1,24 @@
+[h1]Telecamera libera[/h1]
+La telecamera tattica di Phoenix Point è bloccata su una vista dall'alto fissa. Telecamera libera la trasforma in una vera telecamera a orbita libera, come un GDR isometrico ti lascia guardare intorno. Tieni premuto il tasto centrale del mouse e muovi la visuale come preferisci.
+
+Questa mod cambia solo il modo in cui si muove la telecamera. Non tocca unità, bilanciamento, missioni né alcun contenuto di gioco, quindi puoi aggiungerla o rimuoverla in qualsiasi momento senza rischi, e funziona insieme a TFTV.
+
+[h2]Cosa fa[/h2]
+[list]
+[*][b]Orbita libera sul tasto centrale del mouse.[/b] Tieni premuto il TCM e trascina per ruotare a sinistra e a destra e inclinare in su e in giù. Osserva il campo di battaglia da qualsiasi angolazione invece della vista predefinita bloccata.
+[*][b]Uno zoom più ravvicinato e fluido.[/b] La rotellina avvicina verso il centro dello schermo in modo naturale, veloce quando sei lontano e delicato quando sei vicino, e arriva molto più vicino di quanto consentisse la telecamera originale.
+[*][b]Cambio di piano con Alt più rotellina.[/b] Attraversa i piani di un edificio senza rinunciare allo zoom con la rotellina. Il tasto modificatore e le direzioni sono configurabili.
+[*][b]La rotazione da tastiera funziona ancora.[/b] Q ed E continuano a ruotare la telecamera esattamente come prima.
+[/list]
+
+[h2]Cosa risolve[/h2]
+Per impostazione predefinita il tasto centrale del mouse si limitava a riportare di scatto la telecamera a uno zoom lontano, cosa quasi inutile in combattimento. Telecamera libera lo sostituisce con il pieno controllo manuale, così puoi davvero valutare coperture, linea di tiro ed elevazione prima di confermare una mossa.
+
+[h2]Impostazioni[/h2]
+Tutto è regolabile dal menu delle mod nel gioco: attivare o disattivare l'orbita, invertire l'asse verticale, sensibilità, limiti di inclinazione, intervallo di zoom e il tasto modificatore dei piani. La mod è completamente tradotta, quindi il menu e questa pagina compaiono nella tua lingua.
+
+[h2]Ambito[/h2]
+Per ora solo missioni tattiche. La telecamera della mappa del mondo non viene toccata.
+
+[h2]Compatibilità[/h2]
+Funziona sul gioco base ed è pienamente compatibile con TFTV. Nessun nuovo contenuto, nessuna modifica ai salvataggi, e si rimuove facilmente.
