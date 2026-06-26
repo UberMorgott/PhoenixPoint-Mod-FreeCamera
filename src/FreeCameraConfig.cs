@@ -9,10 +9,11 @@ namespace Morgott.FreeCamera
     /// </summary>
     public enum FloorModifier
     {
-        /// <summary>Left or right Ctrl. (Default.)</summary>
+        /// <summary>Left or right Ctrl. WARNING: Ctrl+wheel is the game's native overwatch-cone spread
+        /// control ("OverwatchSpreadAxis"), so choosing Ctrl makes the floor modifier collide with it.</summary>
         Ctrl,
 
-        /// <summary>Left or right Alt.</summary>
+        /// <summary>Left or right Alt. (Default — no scroll-wheel collision.)</summary>
         Alt,
 
         /// <summary>Left or right Shift.</summary>
@@ -46,10 +47,11 @@ namespace Morgott.FreeCamera
             "Zoom: wheel zooms, modifier+wheel changes floor. Floors: wheel changes floor, modifier+wheel zooms.")]
         public WheelMode Wheel = WheelMode.Zoom;
 
-        /// <summary>Held key that swaps the wheel between zoom and floor-change.</summary>
+        /// <summary>Held key that swaps the wheel between zoom and floor-change. Defaults to Alt;
+        /// Ctrl is avoided because Ctrl+wheel is the game's native overwatch-cone control.</summary>
         [ConfigField("Floor modifier key",
-            "Hold this key to swap the scroll wheel's meaning (zoom <-> change floor).")]
-        public FloorModifier FloorKey = FloorModifier.Ctrl;
+            "Hold this key while scrolling to swap the wheel's meaning (zoom <-> change floor). Default Alt. Avoid Ctrl: Ctrl+wheel is the game's overwatch-cone spread control and will collide.")]
+        public FloorModifier FloorKey = FloorModifier.Alt;
 
         /// <summary>Flip the wheel zoom direction (which way scrolls in vs out).</summary>
         [ConfigField("Invert wheel zoom",

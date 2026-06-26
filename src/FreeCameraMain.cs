@@ -51,8 +51,6 @@ namespace Morgott.FreeCamera
             {
                 _controller = ModGO.GetComponent<FreeOrbitController>() ?? ModGO.AddComponent<FreeOrbitController>();
             }
-            // Match the scroll-strip to the current wheel mode (no-op until the input map is ready).
-            FreeOrbitController.SyncFloorActionStrip();
         }
 
         public override void OnModDisabled()
@@ -63,8 +61,6 @@ namespace Morgott.FreeCamera
                 UnityEngine.Object.Destroy(_controller);
                 _controller = null;
             }
-            // Fully revert any scroll-wheel strip so the player's live keybindings are restored.
-            FreeOrbitController.RestoreFloorActionStrip();
             Instance = null;
         }
 
@@ -72,8 +68,6 @@ namespace Morgott.FreeCamera
         {
             SanitizeConfig();
             _controller?.ApplyZoomLimits();
-            // Re-evaluate the scroll-strip: strip in Zoom mode, restore in Floors mode (idempotent).
-            FreeOrbitController.SyncFloorActionStrip();
         }
 
         public override void OnLevelStateChanged(Level level, Level.State prevState, Level.State state)

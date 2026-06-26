@@ -249,45 +249,5 @@ namespace Morgott.FreeCamera.Tests
             Assert.Equal(WheelAction.Floor, res.Action);
             Assert.Equal(-1, res.EffectiveDir); // flipped by invertFloor, unaffected by invertZoom
         }
-
-        // ---- ShouldSwallowFloorEvent: bare wheel can never slice floors --------------------
-
-        [Theory]
-        // Wheel notch this frame, not our re-dispatch -> swallow the native floor event (the fix).
-        [InlineData(true, false, true)]
-        // Our own synthesized floor event (re-entrant dispatch) must reach native floor -> never swallow.
-        [InlineData(true, true, false)]
-        // No wheel notch this frame -> a keyboard/gamepad floor key (e.g. Page Up) must pass through.
-        [InlineData(false, false, false)]
-        [InlineData(false, true, false)]
-        public void ShouldSwallowFloorEvent_SwallowsOnlyWheelDrivenNonSelf(bool wheelNotchThisFrame, bool isSelfDispatch, bool expected)
-        {
-            Assert.Equal(expected, OrbitInputMath.ShouldSwallowFloorEvent(wheelNotchThisFrame, isSelfDispatch));
-        }
-
-        // ---- IsScrollWheelKey: which floor-action keys get stripped ------------------------
-
-        [Theory]
-        // PP's real scroll key name -> matched by substring regardless of source flag.
-        [InlineData("Mouse ScrollWheel", false, true)]
-        [InlineData("Mouse ScrollWheel", true, true)]
-        // Generic scroll/wheel names.
-        [InlineData("Scroll Up", false, true)]
-        [InlineData("Mouse Wheel Down", false, true)]
-        // Mouse key on an axis/axis-trigger source counts as a scroll notch even without "scroll"/"wheel".
-        [InlineData("Mouse Axis 3", true, true)]
-        // Same mouse name but a plain Key source -> NOT a scroll notch (e.g. a mouse button).
-        [InlineData("Mouse 2", false, false)]
-        // Keyboard floor keys MUST survive the strip.
-        [InlineData("Page Up", false, false)]
-        [InlineData("Page Up", true, false)]   // even if mislabelled axis, no "mouse"/"scroll"/"wheel"
-        [InlineData("R", false, false)]
-        // Degenerate names.
-        [InlineData("", false, false)]
-        [InlineData(null, true, false)]
-        public void IsScrollWheelKey_MatchesScrollNotchOnly(string name, bool isAxisSource, bool expected)
-        {
-            Assert.Equal(expected, OrbitInputMath.IsScrollWheelKey(name, isAxisSource));
-        }
     }
 }
