@@ -11,7 +11,7 @@ and execute its steps directly.
 
 - AssemblyName / mod ID: `FreeCamera` / `Morgott.FreeCamera`
 - Steam appid (Phoenix Point): **839770**
-- Workshop item id (`publishedfileid`): **TBD** (not yet published)
+- Workshop item id (`publishedfileid`): **3752059126** (https://steamcommunity.com/sharedfiles/filedetails/?id=3752059126)
 - Remote: **https://github.com/UberMorgott/PhoenixPoint-Mod-FreeCamera** (branch `main`)
 
 ## Build / test
