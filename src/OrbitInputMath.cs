@@ -134,6 +134,31 @@ namespace Morgott.FreeCamera
             int effectiveDir = invert ? -dir : dir;
             return new WheelResolution(action, effectiveDir);
         }
+
+        /// <summary>
+        /// True when an input key is a mouse scroll-wheel notch that should be stripped from a floor
+        /// action so a bare wheel cannot slice floors in Zoom mode. Pure (engine-free) so it is
+        /// unit-tested in isolation; the runtime glue passes <c>key.Name</c> and whether the key's
+        /// engine <c>InputSource</c> is anything other than a plain keyboard/mouse-button <c>Key</c>
+        /// (i.e. an Axis / AxisTrigger source — how Phoenix Point represents a scroll notch, e.g.
+        /// "Mouse ScrollWheel" bound as AxisTriggerPositive/Negative). A keyboard floor key
+        /// (e.g. PageUp — <c>InputSource.Key</c> with a non-mouse name) is deliberately preserved.
+        /// </summary>
+        public static bool IsScrollWheelKey(string keyName, bool isAxisSource)
+        {
+            if (string.IsNullOrEmpty(keyName))
+            {
+                return false;
+            }
+            string lower = keyName.ToLowerInvariant();
+            if (lower.Contains("scroll") || lower.Contains("wheel"))
+            {
+                return true; // e.g. PP's "Mouse ScrollWheel"
+            }
+            // An axis / axis-trigger source on a mouse key is a scroll notch even when the name omits
+            // "scroll"/"wheel"; gated on "mouse" so a gamepad trigger/stick is never mistaken for it.
+            return isAxisSource && lower.Contains("mouse");
+        }
     }
 
     /// <summary>

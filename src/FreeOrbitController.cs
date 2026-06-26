@@ -100,12 +100,15 @@ namespace Morgott.FreeCamera
                 }
                 ModLogger log = FreeCameraMain.Instance?.Logger;
 
-                // DIAGNOSTIC: surface the real wheel binding in the game log.
+                // DIAGNOSTIC: surface the real wheel binding in the game log. Resolved from the FULL
+                // action map (NOT GetActiveAction, which only sees the currently-active input sets and
+                // returned <none> for everything here). "Change Level" is the axis form (gamepad floor).
                 if (log != null)
                 {
-                    log.LogInfo("[FreeCamera] Wheel/floor input bindings (active):");
+                    log.LogInfo("[FreeCamera] Wheel/floor input bindings (full map):");
                     DumpActionBinding(log, input, "Change Level Ascend");
                     DumpActionBinding(log, input, "Change Level Descend");
+                    DumpActionBinding(log, input, "Change Level");
                     DumpActionBinding(log, input, "Discrete Zoom In");
                     DumpActionBinding(log, input, "Discrete Zoom Out");
                 }
@@ -116,10 +119,36 @@ namespace Morgott.FreeCamera
             }
         }
 
+        /// <summary>
+        /// Resolve a named action from the FULL action map (context-independent). NOTE:
+        /// <see cref="InputController.GetActiveAction(string)"/> only returns actions belonging to the
+        /// <i>currently active</i> input sets (rebuilt each context by <c>RefreshActions</c>), so it
+        /// yields null whenever the camera/floor/zoom actions are not live this frame — which silently
+        /// broke both the diagnostic (all dumped &lt;none&gt;) and the strip (it never found the action,
+        /// so the wheel was never removed). <c>AllActionMap</c> holds every action (defaults + the
+        /// player's overrides, indexed by hash) regardless of the active set.
+        /// </summary>
+        private static InputAction ResolveAction(InputController input, string actionName)
+        {
+            List<InputAction> all = input.AllActionMap;
+            if (all == null)
+            {
+                return null;
+            }
+            foreach (InputAction a in all)
+            {
+                if (a != null && a.Name == actionName)
+                {
+                    return a;
+                }
+            }
+            return null;
+        }
+
         /// <summary>Log one action's chord/key bindings as <c>[Name/InputSource]</c> tokens.</summary>
         private static void DumpActionBinding(ModLogger log, InputController input, string actionName)
         {
-            InputAction action = input.GetActiveAction(actionName);
+            InputAction action = ResolveAction(input, actionName);
             if (action == null || action.Chords == null)
             {
                 log.LogInfo("  " + actionName + ": <none>");
@@ -155,10 +184,10 @@ namespace Morgott.FreeCamera
         /// </summary>
         private static bool StripScrollFromFloorAction(ModLogger log, InputController input, string actionName, ref InputAction snapshot)
         {
-            InputAction active = input.GetActiveAction(actionName);
+            InputAction active = ResolveAction(input, actionName);
             if (active == null || active.Chords == null)
             {
-                return false; // not active (e.g. off-mission) -> caller should retry later
+                return false; // not resolvable yet (input not built) -> caller should retry later
             }
             // Snapshot the pristine original ONCE (independent deep copy: fresh chord+key arrays), BEFORE
             // any key is removed, so the strip stays fully reversible. Never overwrite a real snapshot
@@ -169,7 +198,7 @@ namespace Morgott.FreeCamera
             }
             InputAction modified = new InputAction(active); // independent deep copy (chords + keys)
             List<InputChord> keptChords = new List<InputChord>();
-            bool removedAny = false;
+            List<string> removed = new List<string>(); // proof: exactly which keys were removed
             foreach (InputChord chord in modified.Chords)
             {
                 if (chord?.Keys == null)
@@ -183,9 +212,11 @@ namespace Morgott.FreeCamera
                 List<InputKey> keptKeys = new List<InputKey>();
                 foreach (InputKey key in chord.Keys)
                 {
-                    if (key != null && IsScrollWheelKey(key.Name))
+                    // A scroll notch is an Axis/AxisTrigger source (not a plain Key); pass that signal
+                    // to the pure matcher so a keyboard floor key bound to the same action survives.
+                    if (key != null && OrbitInputMath.IsScrollWheelKey(key.Name, key.InputSource != InputSource.Key))
                     {
-                        removedAny = true;
+                        removed.Add(key.Name + "/" + key.InputSource);
                         continue;
                     }
                     keptKeys.Add(key);
@@ -196,13 +227,17 @@ namespace Morgott.FreeCamera
                     keptChords.Add(chord);
                 }
             }
-            if (!removedAny)
+            if (removed.Count == 0)
             {
-                return true; // wheel not bound here -> nothing to strip, but the action was live
+                // Self-proving: the action WAS resolved this time, but carried no scroll-wheel key. If
+                // floors still slice on a bare wheel, the wheel->floor binding lives elsewhere (pivot).
+                log?.LogInfo("[FreeCamera] No scroll-wheel key on \"" + actionName + "\" to strip (Zoom mode).");
+                return true;
             }
             modified.Chords = keptChords.ToArray();
             input.ApplyKeybinding(modified);
-            log?.LogInfo("[FreeCamera] Stripped scroll-wheel key from \"" + actionName + "\" (Zoom mode).");
+            log?.LogInfo("[FreeCamera] Stripped scroll-wheel key(s) from \"" + actionName
+                + "\" (Zoom mode): " + string.Join(", ", removed) + ".");
             return true;
         }
 
@@ -295,17 +330,6 @@ namespace Morgott.FreeCamera
             }
             input.ApplyKeybinding(new InputAction(snapshot));
             log?.LogInfo("[FreeCamera] Restored original scroll/floor binding for \"" + actionName + "\".");
-        }
-
-        /// <summary>Heuristic: a mouse-scroll key carries "scroll" or "wheel" in its name.</summary>
-        private static bool IsScrollWheelKey(string keyName)
-        {
-            if (string.IsNullOrEmpty(keyName))
-            {
-                return false;
-            }
-            string lower = keyName.ToLowerInvariant();
-            return lower.Contains("scroll") || lower.Contains("wheel");
         }
 
         private void Update()

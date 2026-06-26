@@ -249,5 +249,30 @@ namespace Morgott.FreeCamera.Tests
             Assert.Equal(WheelAction.Floor, res.Action);
             Assert.Equal(-1, res.EffectiveDir); // flipped by invertFloor, unaffected by invertZoom
         }
+
+        // ---- IsScrollWheelKey: which floor-action keys get stripped ------------------------
+
+        [Theory]
+        // PP's real scroll key name -> matched by substring regardless of source flag.
+        [InlineData("Mouse ScrollWheel", false, true)]
+        [InlineData("Mouse ScrollWheel", true, true)]
+        // Generic scroll/wheel names.
+        [InlineData("Scroll Up", false, true)]
+        [InlineData("Mouse Wheel Down", false, true)]
+        // Mouse key on an axis/axis-trigger source counts as a scroll notch even without "scroll"/"wheel".
+        [InlineData("Mouse Axis 3", true, true)]
+        // Same mouse name but a plain Key source -> NOT a scroll notch (e.g. a mouse button).
+        [InlineData("Mouse 2", false, false)]
+        // Keyboard floor keys MUST survive the strip.
+        [InlineData("Page Up", false, false)]
+        [InlineData("Page Up", true, false)]   // even if mislabelled axis, no "mouse"/"scroll"/"wheel"
+        [InlineData("R", false, false)]
+        // Degenerate names.
+        [InlineData("", false, false)]
+        [InlineData(null, true, false)]
+        public void IsScrollWheelKey_MatchesScrollNotchOnly(string name, bool isAxisSource, bool expected)
+        {
+            Assert.Equal(expected, OrbitInputMath.IsScrollWheelKey(name, isAxisSource));
+        }
     }
 }
