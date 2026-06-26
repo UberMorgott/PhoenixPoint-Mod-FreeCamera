@@ -9,3 +9,11 @@ Copy-Item "$out\FreeCamera.dll" $dest -Force
 if (Test-Path "$out\FreeCamera.pdb") { Copy-Item "$out\FreeCamera.pdb" $dest -Force }
 Copy-Item "E:\DEV\PhoenixPoint\FreeCamera\meta.json" $dest -Force
 Write-Host "Deployed FreeCamera to $dest"
+
+# Ensure the 2nd-instance (co-op test) junction exists so this mod loads in both instances.
+$inst2Mods = "D:\PP-Instance2\Mods"
+$inst2Link = Join-Path $inst2Mods "FreeCamera"
+if ((Test-Path $inst2Mods) -and -not (Test-Path $inst2Link)) {
+    New-Item -ItemType Junction -Path $inst2Link -Target $dest | Out-Null
+    Write-Host "Linked FreeCamera into 2nd instance: $inst2Link -> $dest"
+}
