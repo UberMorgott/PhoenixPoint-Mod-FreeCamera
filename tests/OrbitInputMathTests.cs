@@ -250,6 +250,21 @@ namespace Morgott.FreeCamera.Tests
             Assert.Equal(-1, res.EffectiveDir); // flipped by invertFloor, unaffected by invertZoom
         }
 
+        // ---- ShouldSwallowFloorEvent: bare wheel can never slice floors --------------------
+
+        [Theory]
+        // Wheel notch this frame, not our re-dispatch -> swallow the native floor event (the fix).
+        [InlineData(true, false, true)]
+        // Our own synthesized floor event (re-entrant dispatch) must reach native floor -> never swallow.
+        [InlineData(true, true, false)]
+        // No wheel notch this frame -> a keyboard/gamepad floor key (e.g. Page Up) must pass through.
+        [InlineData(false, false, false)]
+        [InlineData(false, true, false)]
+        public void ShouldSwallowFloorEvent_SwallowsOnlyWheelDrivenNonSelf(bool wheelNotchThisFrame, bool isSelfDispatch, bool expected)
+        {
+            Assert.Equal(expected, OrbitInputMath.ShouldSwallowFloorEvent(wheelNotchThisFrame, isSelfDispatch));
+        }
+
         // ---- IsScrollWheelKey: which floor-action keys get stripped ------------------------
 
         [Theory]

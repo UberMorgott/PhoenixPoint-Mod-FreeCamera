@@ -136,6 +136,23 @@ namespace Morgott.FreeCamera
         }
 
         /// <summary>
+        /// Decide whether a native "Change Level" floor event reaching the camera must be swallowed so a
+        /// bare scroll-wheel notch can NEVER slice building floors. The wheel-router owns every
+        /// wheel-&gt;floor step (it synthesizes the floor change itself, honouring InvertFloor, whenever a
+        /// notch resolves to Floor), so any floor event that is driven by a wheel notch in the current
+        /// frame must be suppressed — the single exception is the router's OWN re-dispatched synthetic
+        /// event (<paramref name="isSelfDispatch"/>), which must reach the native floor logic to produce
+        /// exactly one step. A floor event with no wheel notch this frame is a keyboard/gamepad floor key
+        /// (e.g. Page Up) and is always preserved. Pure (engine-free) so it unit-tests in isolation; the
+        /// runtime glue supplies <paramref name="wheelNotchThisFrame"/> (a Discrete-Zoom event seen this
+        /// frame OR a live mouse-scroll delta — ordering-independent) and the re-entrancy flag.
+        /// </summary>
+        public static bool ShouldSwallowFloorEvent(bool wheelNotchThisFrame, bool isSelfDispatch)
+        {
+            return wheelNotchThisFrame && !isSelfDispatch;
+        }
+
+        /// <summary>
         /// True when an input key is a mouse scroll-wheel notch that should be stripped from a floor
         /// action so a bare wheel cannot slice floors in Zoom mode. Pure (engine-free) so it is
         /// unit-tested in isolation; the runtime glue passes <c>key.Name</c> and whether the key's
