@@ -1,6 +1,6 @@
 # Free Camera
 
-> A Baldur's-Gate-style free-orbit tactical camera for Phoenix Point. Hold the middle mouse button and drag to look around the battlefield freely.
+> A free-orbit tactical camera for Phoenix Point. Hold the middle mouse button and drag to look around the battlefield freely.
 
 Free Camera replaces the stock "middle-mouse = snap zoom out" with a proper free orbit, the way an isometric RPG camera feels. It changes no game content — only how the tactical camera moves. Works standalone on the base game and is fully compatible with TFTV.
 

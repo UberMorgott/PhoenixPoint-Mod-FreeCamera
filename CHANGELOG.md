@@ -8,7 +8,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - **MMB-drag free orbit** for the tactical camera: hold the middle mouse button and drag to
-  rotate (yaw) and tilt (pitch), Baldur's-Gate style. The stock keyboard Q/E rotation is left
+  rotate (yaw) and tilt (pitch) freely. The stock keyboard Q/E rotation is left
   untouched, and orbit only drives while that rotation is idle.
 - **Distance-proportional wheel zoom with an extended range.** The mouse wheel (and keyboard
   t/g) zooms toward the screen centre by a fraction of the current distance — fast when far,

@@ -1,6 +1,6 @@
 # Free Camera — project notes
 
-Baldur's-Gate-style free-orbit tactical camera mod for Phoenix Point (Approach A:
+Free-orbit tactical camera mod for Phoenix Point (Approach A:
 thin MonoBehaviour driving `Base.Cameras.PlanarScrollCamera` + one Harmony prefix).
 See `docs/design.md` for the verified engine facts and component map.
 

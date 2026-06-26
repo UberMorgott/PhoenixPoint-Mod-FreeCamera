@@ -1,6 +1,6 @@
 # Free Camera — design / spec
 
-Baldur's-Gate-style free-orbit tactical camera for Phoenix Point. Tactical combat only (v1).
+Free-orbit tactical camera for Phoenix Point. Tactical combat only (v1).
 
 ## Requirements
 
