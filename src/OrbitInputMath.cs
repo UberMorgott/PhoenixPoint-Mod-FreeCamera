@@ -106,5 +106,73 @@ namespace Morgott.FreeCamera
                 max = min + 1f;
             }
         }
+
+        /// <summary>
+        /// Decide whether a single scroll-wheel notch should zoom or change floor, and in which
+        /// direction. Pure (no engine types) so it unit-tests in isolation; the runtime patch feeds
+        /// it the live state: <paramref name="modifierHeld"/> = is the floor-swap modifier key down,
+        /// <paramref name="wheelDir"/> = the raw notch (+1 for a "Discrete Zoom In" event, -1 for
+        /// "Discrete Zoom Out"). Mode + modifier select the action; the matching invert flag
+        /// (<paramref name="invertZoom"/> for Zoom, <paramref name="invertFloor"/> for Floor) may flip
+        /// the effective direction. Returns the action and the post-invert direction.
+        /// </summary>
+        public static WheelResolution ResolveWheelAction(WheelMode mode, bool modifierHeld, int wheelDir, bool invertZoom, bool invertFloor)
+        {
+            // Zoom mode: bare wheel zooms, modifier swaps to floor. Floors mode: the mirror.
+            WheelAction action;
+            if (mode == WheelMode.Zoom)
+            {
+                action = modifierHeld ? WheelAction.Floor : WheelAction.Zoom;
+            }
+            else
+            {
+                action = modifierHeld ? WheelAction.Zoom : WheelAction.Floor;
+            }
+
+            int dir = wheelDir > 0 ? 1 : (wheelDir < 0 ? -1 : 0);
+            bool invert = action == WheelAction.Zoom ? invertZoom : invertFloor;
+            int effectiveDir = invert ? -dir : dir;
+            return new WheelResolution(action, effectiveDir);
+        }
+    }
+
+    /// <summary>
+    /// What the scroll wheel does with no modifier held. Surfaced in-game as an arrow-picker
+    /// (<see cref="FreeCameraConfig.Wheel"/>); the held floor modifier swaps to the other meaning.
+    /// </summary>
+    public enum WheelMode
+    {
+        /// <summary>Bare wheel zooms the camera; floor-modifier + wheel changes floor. (Default.)</summary>
+        Zoom,
+
+        /// <summary>Bare wheel changes floor (native feel); floor-modifier + wheel zooms.</summary>
+        Floors,
+    }
+
+    /// <summary>The resolved meaning of one wheel notch.</summary>
+    public enum WheelAction
+    {
+        /// <summary>Move the camera closer/farther.</summary>
+        Zoom,
+
+        /// <summary>Step the visible storey up/down (native "Change Level Ascend/Descend").</summary>
+        Floor,
+    }
+
+    /// <summary>
+    /// Output of <see cref="OrbitInputMath.ResolveWheelAction"/>: which action a wheel notch maps to,
+    /// and its direction after the invert flags. <see cref="EffectiveDir"/> is +1 for zoom-in /
+    /// floor-ascend, -1 for zoom-out / floor-descend.
+    /// </summary>
+    public readonly struct WheelResolution
+    {
+        public readonly WheelAction Action;
+        public readonly int EffectiveDir;
+
+        public WheelResolution(WheelAction action, int effectiveDir)
+        {
+            Action = action;
+            EffectiveDir = effectiveDir;
+        }
     }
 }

@@ -3,6 +3,24 @@ using PhoenixPoint.Modding;
 namespace Morgott.FreeCamera
 {
     /// <summary>
+    /// Held keyboard modifier that swaps the scroll wheel's meaning (zoom &lt;-&gt; floor). Rendered
+    /// in-game as an arrow-picker. Read at runtime by the wheel-router patch via
+    /// <c>UnityEngine.Input.GetKey</c>.
+    /// </summary>
+    public enum FloorModifier
+    {
+        /// <summary>Left or right Ctrl. (Default.)</summary>
+        Ctrl,
+
+        /// <summary>Left or right Alt.</summary>
+        Alt,
+
+        /// <summary>Left or right Shift.</summary>
+        Shift,
+    }
+
+
+    /// <summary>
     /// In-game mod settings for Free Camera. The game auto-discovers every public instance field
     /// (see <see cref="ModConfig.GetConfigFields"/>) and surfaces it in the mod-options UI, using the
     /// <see cref="ConfigFieldAttribute"/> for the label/description. There are NO sliders in that UI,
@@ -22,6 +40,26 @@ namespace Morgott.FreeCamera
         [ConfigField("Invert Y axis",
             "Flip the up/down drag direction when tilting the camera.")]
         public bool InvertY = false;
+
+        /// <summary>What the bare scroll wheel does; the floor modifier swaps to the other meaning.</summary>
+        [ConfigField("Scroll wheel mode",
+            "Zoom: wheel zooms, modifier+wheel changes floor. Floors: wheel changes floor, modifier+wheel zooms.")]
+        public WheelMode Wheel = WheelMode.Zoom;
+
+        /// <summary>Held key that swaps the wheel between zoom and floor-change.</summary>
+        [ConfigField("Floor modifier key",
+            "Hold this key to swap the scroll wheel's meaning (zoom <-> change floor).")]
+        public FloorModifier FloorKey = FloorModifier.Ctrl;
+
+        /// <summary>Flip the wheel zoom direction (which way scrolls in vs out).</summary>
+        [ConfigField("Invert wheel zoom",
+            "Flip which scroll direction zooms in versus out.")]
+        public bool InvertZoom = false;
+
+        /// <summary>Flip which wheel direction goes up versus down a floor.</summary>
+        [ConfigField("Invert wheel floor",
+            "Flip which scroll direction climbs a floor versus descends one.")]
+        public bool InvertFloor = false;
 
         /// <summary>Horizontal (yaw) drag sensitivity multiplier. Clamped to &gt; 0 in code.</summary>
         [ConfigField("Horizontal sensitivity",

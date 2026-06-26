@@ -173,5 +173,81 @@ namespace Morgott.FreeCamera.Tests
             Assert.Equal(3f, min, 4);
             Assert.Equal(55f, max, 4);
         }
+
+        // ---- ResolveWheelAction: action truth table --------------------------------------
+
+        [Theory]
+        // Zoom mode: bare wheel = Zoom, modifier+wheel = Floor.
+        [InlineData(WheelMode.Zoom, false, WheelAction.Zoom)]
+        [InlineData(WheelMode.Zoom, true, WheelAction.Floor)]
+        // Floors mode: the mirror.
+        [InlineData(WheelMode.Floors, false, WheelAction.Floor)]
+        [InlineData(WheelMode.Floors, true, WheelAction.Zoom)]
+        public void ResolveWheelAction_ActionFromModeAndModifier(WheelMode mode, bool modifierHeld, WheelAction expected)
+        {
+            WheelResolution res = OrbitInputMath.ResolveWheelAction(mode, modifierHeld, wheelDir: 1, invertZoom: false, invertFloor: false);
+            Assert.Equal(expected, res.Action);
+        }
+
+        // ---- ResolveWheelAction: direction passthrough (no invert) ------------------------
+
+        [Theory]
+        [InlineData(1, 1)]
+        [InlineData(-1, -1)]
+        public void ResolveWheelAction_NoInvert_KeepsDirection(int wheelDir, int expectedDir)
+        {
+            // Zoom action.
+            WheelResolution zoom = OrbitInputMath.ResolveWheelAction(WheelMode.Zoom, false, wheelDir, invertZoom: false, invertFloor: false);
+            Assert.Equal(WheelAction.Zoom, zoom.Action);
+            Assert.Equal(expectedDir, zoom.EffectiveDir);
+
+            // Floor action.
+            WheelResolution floor = OrbitInputMath.ResolveWheelAction(WheelMode.Floors, false, wheelDir, invertZoom: false, invertFloor: false);
+            Assert.Equal(WheelAction.Floor, floor.Action);
+            Assert.Equal(expectedDir, floor.EffectiveDir);
+        }
+
+        // ---- ResolveWheelAction: invert flags flip only their own action ------------------
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(-1)]
+        public void ResolveWheelAction_InvertZoom_FlipsZoomOnly(int wheelDir)
+        {
+            // Zoom action: InvertZoom flips the effective direction.
+            WheelResolution zoom = OrbitInputMath.ResolveWheelAction(WheelMode.Zoom, false, wheelDir, invertZoom: true, invertFloor: false);
+            Assert.Equal(WheelAction.Zoom, zoom.Action);
+            Assert.Equal(-wheelDir, zoom.EffectiveDir);
+
+            // Floor action: InvertZoom must NOT affect it.
+            WheelResolution floor = OrbitInputMath.ResolveWheelAction(WheelMode.Floors, false, wheelDir, invertZoom: true, invertFloor: false);
+            Assert.Equal(WheelAction.Floor, floor.Action);
+            Assert.Equal(wheelDir, floor.EffectiveDir);
+        }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(-1)]
+        public void ResolveWheelAction_InvertFloor_FlipsFloorOnly(int wheelDir)
+        {
+            // Floor action: InvertFloor flips the effective direction.
+            WheelResolution floor = OrbitInputMath.ResolveWheelAction(WheelMode.Floors, false, wheelDir, invertZoom: false, invertFloor: true);
+            Assert.Equal(WheelAction.Floor, floor.Action);
+            Assert.Equal(-wheelDir, floor.EffectiveDir);
+
+            // Zoom action: InvertFloor must NOT affect it.
+            WheelResolution zoom = OrbitInputMath.ResolveWheelAction(WheelMode.Zoom, false, wheelDir, invertZoom: false, invertFloor: true);
+            Assert.Equal(WheelAction.Zoom, zoom.Action);
+            Assert.Equal(wheelDir, zoom.EffectiveDir);
+        }
+
+        [Fact]
+        public void ResolveWheelAction_ModifierSwap_UsesSwappedActionsInvert()
+        {
+            // Zoom mode + modifier held -> Floor action, so InvertFloor (not InvertZoom) applies.
+            WheelResolution res = OrbitInputMath.ResolveWheelAction(WheelMode.Zoom, modifierHeld: true, wheelDir: 1, invertZoom: true, invertFloor: true);
+            Assert.Equal(WheelAction.Floor, res.Action);
+            Assert.Equal(-1, res.EffectiveDir); // flipped by invertFloor, unaffected by invertZoom
+        }
     }
 }

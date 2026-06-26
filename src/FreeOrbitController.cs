@@ -1,8 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using Base.Cameras;
 using Base.Core;
+using Base.Input;
+using PhoenixPoint.Modding;
 using UnityEngine;
 
 namespace Morgott.FreeCamera
@@ -23,6 +27,19 @@ namespace Morgott.FreeCamera
         private static FieldInfo _headingField;        // PlanarScrollCamera._heading           (float)
         private static FieldInfo _rotationInputField;  // PlanarScrollCamera._rotationInputData (private struct)
         private static FieldInfo _directionField;      // RotationInputData.Direction           (private enum, value None == 0)
+
+        // One-shot guard so the read-only wheel-binding diagnostic dump runs once per session.
+        private static bool _wheelBindingChecked;
+
+        // Pristine, pre-strip deep copies of the two floor actions, captured the first time the wheel
+        // key is stripped so the strip is fully reversible (mod disable / Floors mode). Captured once;
+        // never overwritten with an already-stripped action.
+        private static InputAction _origAscend;
+        private static InputAction _origDescend;
+
+        // True while the scroll-wheel key is currently stripped from the floor actions, so apply/restore
+        // stay balanced: no double-strip, no restore-when-nothing-stripped.
+        private static bool _stripApplied;
 
         private PlanarScrollCamera _camera;
         private bool _active;
@@ -60,6 +77,237 @@ namespace Morgott.FreeCamera
             _camera.MaxZoomOutLimit = max;  // farthest distance
         }
 
+        /// <summary>
+        /// Once per session, log the live scroll-wheel / floor input bindings (the one fact that can
+        /// only be confirmed in-game). Read-only diagnostic; the actual scroll-strip is applied (and
+        /// reverted) by <see cref="SyncFloorActionStrip"/>. Best-effort: never throws out of Update.
+        /// </summary>
+        private void RunWheelBindingDiagnosticsOnce()
+        {
+            if (_wheelBindingChecked)
+            {
+                return;
+            }
+            _wheelBindingChecked = true;
+
+            try
+            {
+                InputController input = GameUtl.GameComponent<InputController>();
+                if (input == null)
+                {
+                    _wheelBindingChecked = false; // not ready yet; retry on a later frame
+                    return;
+                }
+                ModLogger log = FreeCameraMain.Instance?.Logger;
+
+                // DIAGNOSTIC: surface the real wheel binding in the game log.
+                if (log != null)
+                {
+                    log.LogInfo("[FreeCamera] Wheel/floor input bindings (active):");
+                    DumpActionBinding(log, input, "Change Level Ascend");
+                    DumpActionBinding(log, input, "Change Level Descend");
+                    DumpActionBinding(log, input, "Discrete Zoom In");
+                    DumpActionBinding(log, input, "Discrete Zoom Out");
+                }
+            }
+            catch
+            {
+                // Diagnostics must never break the input loop.
+            }
+        }
+
+        /// <summary>Log one action's chord/key bindings as <c>[Name/InputSource]</c> tokens.</summary>
+        private static void DumpActionBinding(ModLogger log, InputController input, string actionName)
+        {
+            InputAction action = input.GetActiveAction(actionName);
+            if (action == null || action.Chords == null)
+            {
+                log.LogInfo("  " + actionName + ": <none>");
+                return;
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.Append("  ").Append(actionName).Append(": ");
+            foreach (InputChord chord in action.Chords)
+            {
+                if (chord?.Keys == null)
+                {
+                    continue;
+                }
+                foreach (InputKey key in chord.Keys)
+                {
+                    if (key == null)
+                    {
+                        continue;
+                    }
+                    sb.Append('[').Append(key.Name).Append('/').Append(key.InputSource).Append(']');
+                }
+            }
+            log.LogInfo(sb.ToString());
+        }
+
+        /// <summary>
+        /// Remove any scroll-wheel key from a floor action via the native rebind API, capturing the
+        /// pristine pre-strip action into <paramref name="snapshot"/> (once) so the change can be
+        /// reverted later. Deep-copies the active action, filters the copy, and only applies if a scroll
+        /// key was actually found (idempotent no-op otherwise). Returns true when the action was live
+        /// (resolvable) this frame, so the caller knows the strip was actually evaluated. A "scroll" key
+        /// is detected by name (the exact name is what the diagnostic dump reveals).
+        /// </summary>
+        private static bool StripScrollFromFloorAction(ModLogger log, InputController input, string actionName, ref InputAction snapshot)
+        {
+            InputAction active = input.GetActiveAction(actionName);
+            if (active == null || active.Chords == null)
+            {
+                return false; // not active (e.g. off-mission) -> caller should retry later
+            }
+            // Snapshot the pristine original ONCE (independent deep copy: fresh chord+key arrays), BEFORE
+            // any key is removed, so the strip stays fully reversible. Never overwrite a real snapshot
+            // with an already-stripped action on a later re-strip.
+            if (snapshot == null)
+            {
+                snapshot = new InputAction(active);
+            }
+            InputAction modified = new InputAction(active); // independent deep copy (chords + keys)
+            List<InputChord> keptChords = new List<InputChord>();
+            bool removedAny = false;
+            foreach (InputChord chord in modified.Chords)
+            {
+                if (chord?.Keys == null)
+                {
+                    if (chord != null)
+                    {
+                        keptChords.Add(chord);
+                    }
+                    continue;
+                }
+                List<InputKey> keptKeys = new List<InputKey>();
+                foreach (InputKey key in chord.Keys)
+                {
+                    if (key != null && IsScrollWheelKey(key.Name))
+                    {
+                        removedAny = true;
+                        continue;
+                    }
+                    keptKeys.Add(key);
+                }
+                if (keptKeys.Count > 0)
+                {
+                    chord.Keys = keptKeys.ToArray();
+                    keptChords.Add(chord);
+                }
+            }
+            if (!removedAny)
+            {
+                return true; // wheel not bound here -> nothing to strip, but the action was live
+            }
+            modified.Chords = keptChords.ToArray();
+            input.ApplyKeybinding(modified);
+            log?.LogInfo("[FreeCamera] Stripped scroll-wheel key from \"" + actionName + "\" (Zoom mode).");
+            return true;
+        }
+
+        /// <summary>
+        /// Apply or revert the scroll-wheel strip to match the current wheel mode, keeping the player's
+        /// live keybindings reversible. Strips the wheel key from the floor actions when orbit is on and
+        /// <see cref="WheelMode.Zoom"/> is selected (so the bare wheel is zoom-only); otherwise restores
+        /// the captured originals. Idempotent and balanced via <see cref="_stripApplied"/> — never
+        /// double-strips, never restores when nothing is stripped. Best-effort: never throws.
+        /// </summary>
+        internal static void SyncFloorActionStrip()
+        {
+            try
+            {
+                FreeCameraConfig cfg = FreeCameraMain.Instance?.Config;
+                bool wantStrip = cfg != null && cfg.EnableOrbit && cfg.Wheel == WheelMode.Zoom;
+                if (wantStrip == _stripApplied)
+                {
+                    return; // already in the desired state
+                }
+                InputController input = GameUtl.GameComponent<InputController>();
+                if (input == null)
+                {
+                    return; // input not ready (e.g. no mission yet); a later call retries
+                }
+                ModLogger log = FreeCameraMain.Instance?.Logger;
+                if (wantStrip)
+                {
+                    bool liveA = StripScrollFromFloorAction(log, input, "Change Level Ascend", ref _origAscend);
+                    bool liveD = StripScrollFromFloorAction(log, input, "Change Level Descend", ref _origDescend);
+                    if (liveA || liveD)
+                    {
+                        _stripApplied = true; // only latch once the actions were actually resolvable
+                    }
+                }
+                else
+                {
+                    RestoreFloorAction(log, input, _origAscend, "Change Level Ascend");
+                    RestoreFloorAction(log, input, _origDescend, "Change Level Descend");
+                    _stripApplied = false;
+                }
+            }
+            catch
+            {
+                // Rebinding is best-effort: never break the input loop or mod lifecycle.
+            }
+        }
+
+        /// <summary>
+        /// Force-restore the original floor bindings and clear the strip state, regardless of config.
+        /// Called on mod disable so the player's session-live keybindings are fully reverted; also resets
+        /// the one-shot diagnostic guard so a disable -> enable cycle re-runs cleanly. Best-effort.
+        /// </summary>
+        internal static void RestoreFloorActionStrip()
+        {
+            try
+            {
+                if (_stripApplied)
+                {
+                    InputController input = GameUtl.GameComponent<InputController>();
+                    if (input != null)
+                    {
+                        ModLogger log = FreeCameraMain.Instance?.Logger;
+                        RestoreFloorAction(log, input, _origAscend, "Change Level Ascend");
+                        RestoreFloorAction(log, input, _origDescend, "Change Level Descend");
+                    }
+                }
+            }
+            catch
+            {
+                // Best-effort restore: never throw out of the mod lifecycle.
+            }
+            finally
+            {
+                _stripApplied = false;
+                _wheelBindingChecked = false; // disable -> enable re-runs diagnostics + strip cleanly
+            }
+        }
+
+        /// <summary>
+        /// Re-apply a captured pristine floor action through the native rebind API, restoring the
+        /// player's original binding. Re-caches a fresh deep copy of the snapshot so the stored original
+        /// can never be mutated by a later strip. No-op when nothing was captured for this action.
+        /// </summary>
+        private static void RestoreFloorAction(ModLogger log, InputController input, InputAction snapshot, string actionName)
+        {
+            if (snapshot == null)
+            {
+                return; // nothing was ever stripped for this action
+            }
+            input.ApplyKeybinding(new InputAction(snapshot));
+            log?.LogInfo("[FreeCamera] Restored original scroll/floor binding for \"" + actionName + "\".");
+        }
+
+        /// <summary>Heuristic: a mouse-scroll key carries "scroll" or "wheel" in its name.</summary>
+        private static bool IsScrollWheelKey(string keyName)
+        {
+            if (string.IsNullOrEmpty(keyName))
+            {
+                return false;
+            }
+            string lower = keyName.ToLowerInvariant();
+            return lower.Contains("scroll") || lower.Contains("wheel");
+        }
+
         private void Update()
         {
             if (!_active)
@@ -82,6 +330,8 @@ namespace Morgott.FreeCamera
                     return;
                 }
                 ApplyZoomLimits();
+                RunWheelBindingDiagnosticsOnce();
+                SyncFloorActionStrip();
             }
 
             if (!Input.GetMouseButton(MiddleMouseButton))
