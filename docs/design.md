@@ -40,18 +40,35 @@ its angle state each frame, and swallow one stock input event. Minimal surface, 
   `GameUtl.GameComponent<CameraManager>().CameraBehaviors.OfType<PlanarScrollCamera>().FirstOrDefault()`.
   (TFTV alt: `CameraManager.CurrentBehavior as PlanarScrollCamera`.) NonPublic reflection works at runtime.
 - `InputEvent` = struct in `Base.Input` with public `string Name`, `InputEventType Type`, `InputType InputType`.
-- `ConfigFieldAttribute(text, description)` drives the in-game label/description (`ModConfigField.cs:46-54`).
+- In-game label/description come from `ModConfigField.GetText`/`GetDescription` (`ModConfigField.cs:17-29`).
+  `ConfigFieldAttribute(text, description)` is one way to set them; this mod instead overrides
+  `ModConfig.GetConfigFields()` and assigns localized delegates (see "Localization" below).
 
 ## Component map
 
 | File | Role | Touches |
 |---|---|---|
 | `src/OrbitInputMath.cs` | Pure, engine-free math (TDD core) | nothing — float math only |
-| `src/FreeCameraConfig.cs` | `ModConfig` subclass, `[ConfigField]` fields | modding UI |
-| `src/FreeCameraMain.cs` | `ModMain`: PatchAll, attach controller, level on/off, sanitize config | `HarmonyInstance`, `ModGO`, `Level.State` |
+| `src/FreeCameraConfig.cs` | `ModConfig` subclass; public config fields + localized `GetConfigFields()` override | modding UI, `Loc` |
+| `src/FreeCameraMain.cs` | `ModMain`: PatchAll, load localization CSV, attach controller, level on/off, sanitize config | `HarmonyInstance`, `ModGO`, `Level.State`, `I2.Loc` |
 | `src/FreeOrbitController.cs` | `MonoBehaviour`: per-frame MMB orbit glue | `PlanarScrollCamera.VerticalAngle` (write), `_heading`/`_rotationInputData` (reflection), `MaxZoom*Limit`, `UnityEngine.Input` |
 | `src/WheelRouterPatch.cs` | Harmony Prefix on `HandleInput` — wheel zoom/floor routing + `OnActivate` zoom-limit postfix | `PlanarScrollCamera.HandleInput` (`"Change Level"` axis), `MaxZoom*Limit` |
 | `src/MmbZoomSuppressPatch.cs` | Harmony Prefix swallowing `"Mouse Scroll Zoom Out"` | `PlanarScrollCamera.HandleZoomRotateSelect` |
+| `src/Localization.cs` | `Loc.Get(key, fallback)` façade over I2 for the current language | `I2.Loc.LocalizationManager` |
+
+## Localization (in-game options UI)
+
+Mirrors Oracle's mechanism. `FreeCameraConfig.GetConfigFields()` keeps the base-built fields (value
+get/set intact) and only overrides each field's `GetText`/`GetDescription` to read a keyed string via
+`Loc.Get("FREECAM_<Field>"/"…_DESCRIPTION", englishFallback)`. `FreeCameraMain.LoadLocalization()` imports
+`Assets/Localization/FreeCamera_Localization.csv` (UTF-8) into I2's primary source on enable
+(`Import_CSV(..., AddNewTerms)` + `LocalizeAll`), fail-silent so a missing/broken CSV just leaves the
+English fallback. Columns = the game's 8 registered I2 languages (`I2Languages.json` `mSource.mLanguages`:
+English, Chinese (Simplified), French, German, Italian, Polish, Russian, Spanish; `UI_Tester` excluded).
+Enum **value** names (ZOOM/FLOORS, CTRL/ALT/SHIFT) are rendered by the engine as the raw uppercased member
+name (`ModSettingController.cs:91`) with no localization hook, so they stay as-is and are explained in the
+localized description text. The `Assets/` folder must ship with the mod (`deploy.ps1` / `pack-dist.ps1`
+both copy it).
 
 ## Scroll-wheel routing — verified ground truth (extracted input map + decompile, 2026-06-26)
 
